@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, AsyncGenerator
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from dotenv import load_dotenv
-from template import SYSTEM_PROMPT, TITLE_PROMPT
+from template import SYSTEM_PROMPT, TITLE_PROMPT, EVALUATION_PROMPT
 import os
 import json
 
@@ -26,10 +27,11 @@ app.add_middleware(
 # 会話履歴を保存（セッションごとに管理すべきだが、簡易版として全体で1つ）
 conversation_history: List[Dict] = []
 
-# LangChain ChatOpenAI初期化
+# LangChain ChatOpenAI初期化（ストリーミング対応）
 llm = ChatOpenAI(
     model="gpt-4o",
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("OPENAI_API_KEY"),
+    streaming=True
 )
 
 class VoiceInput(BaseModel):
@@ -49,10 +51,8 @@ class OpinionsResponse(BaseModel):
     opinion1: Opinion
     opinion2: Opinion
 
-@app.post("/chat/", response_model=VoiceResponse)
-def chat(voice_input: VoiceInput):
-    user_message = voice_input.text
-
+async def generate_stream(user_message: str) -> AsyncGenerator[str, None]:
+    """ストリーミングでAIの応答を生成"""
     # 会話履歴に追加
     conversation_history.append({"role": "user", "content": user_message})
 
@@ -65,14 +65,32 @@ def chat(voice_input: VoiceInput):
         elif msg["role"] == "assistant":
             messages.append(AIMessage(content=msg["content"]))
 
-    # AIからの応答を取得
-    response = llm.invoke(messages)
-    ai_response = response.content
+    # ストリーミングでAIからの応答を取得
+    full_response = ""
+    async for chunk in llm.astream(messages):
+        content = chunk.content
+        if content:
+            full_response += content
+            # Server-Sent Events形式で送信
+            yield f"data: {json.dumps({'content': content})}\n\n"
 
-    # 会話履歴に追加
-    conversation_history.append({"role": "assistant", "content": ai_response})
+    # 会話履歴に完全な応答を追加
+    conversation_history.append({"role": "assistant", "content": full_response})
 
-    return VoiceResponse(response=ai_response)
+    # 終了シグナル
+    yield f"data: {json.dumps({'done': True})}\n\n"
+
+@app.post("/chat/")
+async def chat(voice_input: VoiceInput):
+    """ストリーミングチャットエンドポイント"""
+    return StreamingResponse(
+        generate_stream(voice_input.text),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
 
 @app.post("/generate-opinions/", response_model=OpinionsResponse)
 def generate_opinions(topic_input: TopicInput):
@@ -120,6 +138,70 @@ def reset_conversation():
     global conversation_history
     conversation_history = []
     return {"status": "reset"}
+
+@app.post("/evaluate/")
+def evaluate_debate():
+    """ディベートを評価"""
+    # 会話履歴から評価用のテキストを構築
+    debate_text = "論題とディベートの内容:\n\n"
+
+    for i, msg in enumerate(conversation_history):
+        role = "ユーザー" if msg["role"] == "user" else "AI"
+        debate_text += f"{role}: {msg['content']}\n\n"
+
+    messages = [
+        SystemMessage(content=EVALUATION_PROMPT),
+        HumanMessage(content=debate_text)
+    ]
+
+    response = llm.invoke(messages)
+    response_text = response.content
+
+    # JSON部分を抽出
+    try:
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0]
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0]
+
+        evaluation_data = json.loads(response_text.strip())
+        return evaluation_data
+    except Exception as e:
+        # エラー時はデフォルトの評価を返す
+        return {
+            "user_scores": {
+                "logic": 15,
+                "evidence": 15,
+                "rebuttal": 15,
+                "persuasiveness": 15,
+                "structure": 15,
+                "total": 75,
+                "comments": {
+                    "logic": "評価を生成できませんでした",
+                    "evidence": "評価を生成できませんでした",
+                    "rebuttal": "評価を生成できませんでした",
+                    "persuasiveness": "評価を生成できませんでした",
+                    "structure": "評価を生成できませんでした"
+                }
+            },
+            "ai_scores": {
+                "logic": 15,
+                "evidence": 15,
+                "rebuttal": 15,
+                "persuasiveness": 15,
+                "structure": 15,
+                "total": 75,
+                "comments": {
+                    "logic": "評価を生成できませんでした",
+                    "evidence": "評価を生成できませんでした",
+                    "rebuttal": "評価を生成できませんでした",
+                    "persuasiveness": "評価を生成できませんでした",
+                    "structure": "評価を生成できませんでした"
+                }
+            },
+            "winner": "user",
+            "overall_comment": "評価を生成できませんでした"
+        }
 
 @app.get("/")
 def read_root():
