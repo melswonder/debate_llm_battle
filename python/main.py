@@ -46,6 +46,7 @@ class TopicInput(BaseModel):
 class Opinion(BaseModel):
     title: str
     description: str
+    emoji: str
 
 class OpinionsResponse(BaseModel):
     opinion1: Opinion

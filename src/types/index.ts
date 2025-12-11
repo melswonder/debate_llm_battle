@@ -3,6 +3,7 @@ export type GameStage = 'topic-input' | 'stance-selection' | 'debate' | 'result'
 export interface Opinion {
   title: string;
   description: string;
+  emoji: string;
 }
 
 export interface Message {

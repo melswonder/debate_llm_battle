@@ -30,7 +30,7 @@ const StanceSelection: React.FC<StanceSelectionProps> = ({ topic, opinion1, opin
             onClick={() => onSelectStance(opinion1.title)}
             className="p-8 bg-gradient-to-br from-blue-100 to-blue-200 border-4 border-blue-400 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 transform hover:scale-105"
           >
-            <div className="text-6xl mb-4">💡</div>
+            <div className="text-6xl mb-4">{opinion1.emoji || '💡'}</div>
             <h3 className="text-2xl font-bold text-blue-800 mb-3">{opinion1.title}</h3>
             <p className="text-blue-700">{opinion1.description}</p>
           </button>
@@ -39,7 +39,7 @@ const StanceSelection: React.FC<StanceSelectionProps> = ({ topic, opinion1, opin
             onClick={() => onSelectStance(opinion2.title)}
             className="p-8 bg-gradient-to-br from-purple-100 to-purple-200 border-4 border-purple-400 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 transform hover:scale-105"
           >
-            <div className="text-6xl mb-4">🔮</div>
+            <div className="text-6xl mb-4">{opinion2.emoji || '🔮'}</div>
             <h3 className="text-2xl font-bold text-purple-800 mb-3">{opinion2.title}</h3>
             <p className="text-purple-700">{opinion2.description}</p>
           </button>
