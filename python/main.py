@@ -29,7 +29,7 @@ conversation_history: List[Dict] = []
 
 # LangChain ChatOpenAI初期化（ストリーミング対応）
 llm = ChatOpenAI(
-    model="gpt-4o",
+    model="gpt-5.2-2025-12-11",
     api_key=os.getenv("OPENAI_API_KEY"),
     streaming=True
 )
