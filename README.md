@@ -1,70 +1,130 @@
-# Getting Started with Create React App
+# Debate LLM Battle
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+LLMを使った討論バトルアプリケーションです。AIと対話しながらディベートを行い、評価を受けることができます。
 
-## Available Scripts
+## 技術スタック
 
-In the project directory, you can run:
+- **フロントエンド**: React 19 + TypeScript
+- **バックエンド**: FastAPI (Python 3.12)
+- **LLM**: OpenAI GPT-4o (LangChain経由)
 
-### `npm start`
+## セットアップ方法
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+このプロジェクトはDockerで動かすことを推奨します。
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 前提条件
 
-### `npm test`
+- Docker と Docker Compose がインストールされていること
+- OpenAI APIキーを取得していること ([https://platform.openai.com/api-keys](https://platform.openai.com/api-keys))
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Docker での起動（推奨）
 
-### `npm run build`
+1. **環境変数の設定**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+# .envファイルを作成（Makefileを使う場合）
+make setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# または手動で作成
+cp .env.example .env
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. `.env` ファイルを編集して、OpenAI APIキーを設定:
 
-### `npm run eject`
+```bash
+OPENAI_API_KEY=sk-proj-...
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. **アプリケーションを起動**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Makefileを使う場合
+make up
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# またはdocker-composeコマンド
+docker-compose up
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+4. ブラウザで以下のURLを開く:
+   - フロントエンド: [http://localhost:3000](http://localhost:3000)
+   - バックエンドAPI: [http://localhost:8000](http://localhost:8000)
+   - API ドキュメント: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Learn More
+5. 停止する場合:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+# Makefileを使う場合
+make down
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# またはdocker-composeコマンド
+docker-compose down
+```
 
-### Code Splitting
+### Makefileコマンド
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+便利なコマンドをMakefileで提供しています:
 
-### Analyzing the Bundle Size
+```bash
+make help          # ヘルプを表示
+make up            # コンテナを起動
+make up-d          # バックグラウンドで起動
+make down          # コンテナを停止
+make build         # イメージをビルド
+make rebuild       # 再ビルドして起動
+make logs          # ログを表示
+make logs-frontend # フロントエンドのログのみ表示
+make logs-backend  # バックエンドのログのみ表示
+make clean         # コンテナとボリュームを削除
+make restart       # コンテナを再起動
+make ps            # コンテナの状態を確認
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### ローカル環境での起動
 
-### Making a Progressive Web App
+Node.js 22以上とPython 3.12以上が必要です。
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. **依存関係をインストール**
 
-### Advanced Configuration
+```bash
+# フロントエンド
+npm install
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# バックエンド
+cd python
+pip install -r requirements.txt
+cd ..
+```
 
-### Deployment
+2. **環境変数を設定**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+cp .env.example .env
+# .envファイルを編集してOPENAI_API_KEYを設定
+```
 
-### `npm run build` fails to minify
+3. **アプリケーションを起動**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+# ターミナル1: フロントエンド
+npm start
+
+# ターミナル2: バックエンド
+cd python
+uvicorn main:app --reload
+```
+
+## プロジェクト構成
+
+```
+debate_llm_battle/
+├── src/                  # Reactフロントエンドのソースコード
+├── python/              # FastAPIバックエンド
+│   ├── main.py         # FastAPIアプリケーション
+│   ├── template.py     # プロンプトテンプレート
+│   └── requirements.txt
+├── docker-compose.yml  # Docker Compose設定
+├── Dockerfile          # フロントエンド用Dockerfile
+├── Makefile           # 便利なコマンド集
+└── README.md
+```
+
