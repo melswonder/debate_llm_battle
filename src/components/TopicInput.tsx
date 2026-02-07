@@ -28,7 +28,7 @@ const TopicInput: React.FC<TopicInputProps> = ({ topic, setTopic, onStart, isLoa
             onChange={(e) => setTopic(e.target.value)}
             placeholder="例: リモートワークは出社勤務より優れている"
             className="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
-            onKeyDown={(e) => e.key === 'Enter' && onStart()}
+            onKeyDown={(e) => e.key === 'Enter' && !isLoading && onStart()}
           />
         </div>
 
