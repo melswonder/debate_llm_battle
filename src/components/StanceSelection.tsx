@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface Opinion {
-  title: string;
-  description: string;
-}
+import { Opinion } from '../types';
 
 interface StanceSelectionProps {
   topic: string;
