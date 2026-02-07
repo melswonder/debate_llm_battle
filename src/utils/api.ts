@@ -38,25 +38,47 @@ export const sendMessageStream = async (
   const decoder = new TextDecoder();
 
   if (reader) {
+    let buffer = '';
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+
+      // 最後の不完全な行はバッファに残す
+      buffer = lines.pop() || '';
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          const data = JSON.parse(line.slice(6));
+          try {
+            const data = JSON.parse(line.slice(6));
 
-          if (data.done) {
-            return;
-          }
+            if (data.done) {
+              return;
+            }
 
-          if (data.content) {
-            onChunk(data.content);
+            if (data.content) {
+              onChunk(data.content);
+            }
+          } catch (e) {
+            // JSONパースエラーは無視（不完全なデータの場合）
+            console.warn('JSON parse error:', e);
           }
         }
+      }
+    }
+
+    // 残りのバッファを処理
+    if (buffer.startsWith('data: ')) {
+      try {
+        const data = JSON.parse(buffer.slice(6));
+        if (data.content) {
+          onChunk(data.content);
+        }
+      } catch (e) {
+        // 無視
       }
     }
   }

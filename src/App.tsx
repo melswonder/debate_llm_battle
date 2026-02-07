@@ -66,17 +66,21 @@ const App: React.FC = () => {
   const handleSendMessage = async (message: string) => {
     setIsProcessing(true);
     try {
-      setConversationHistory(prev => [...prev, { role: 'user', content: message }]);
+      // ユーザーメッセージを追加し、空のAIメッセージも同時に追加
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: message },
+        { role: 'ai', content: '' }
+      ]);
 
       let aiText = '';
-      const aiMessageIndex = conversationHistory.length + 1;
-      setConversationHistory(prev => [...prev, { role: 'ai', content: '' }]);
 
       await sendMessageStream(message, (content) => {
         aiText += content;
+        // 最後のAIメッセージを更新
         setConversationHistory(prev => {
           const newHistory = [...prev];
-          newHistory[aiMessageIndex] = { role: 'ai', content: aiText };
+          newHistory[newHistory.length - 1] = { role: 'ai', content: aiText };
           return newHistory;
         });
       });

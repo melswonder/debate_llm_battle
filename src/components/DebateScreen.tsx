@@ -79,7 +79,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="mb-6 text-center">
             <h2 className="text-3xl font-bold text-indigo-600 mb-2">
